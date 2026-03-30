@@ -3,12 +3,10 @@
 #include "driver/gpio.h"
 #include "esp_log.h"
 
-const char *TAG1 = "TESTE";
+const char *TAG1 = "ConfigurePin";
 
-void configure_pin(int pin)
-{
+void configure_pin(gpio_num_t pin, gpio_mode_t direction) {
     ESP_LOGI(TAG1, "%i configured to blink GPIO LED!", pin);
     gpio_reset_pin(pin);
-    /* Set the GPIO as a push/pull output */
-    gpio_set_direction(pin, GPIO_MODE_OUTPUT);
+    gpio_set_direction(pin, direction);
 }
