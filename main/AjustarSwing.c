@@ -1,21 +1,70 @@
 #include "AjustarSwing.h"
-
-#include "driver/gpio.h"
 #include "configure_pin.h"
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "driver/gpio.h"
 #include "driver/ledc.h"
 #include "esp_log.h"
+#include "esp_err.h"
+#include <stdbool.h>
 
-const char *TAG1 = "AjustarSwing";
+static const char *TAGswing = "AjustarSwing";
 
-void AjustarSwing(gpio_num_t pin, gpio_mode_t direction) {
+void AjustarPinSwing(int pin, int direction, int duty){
     configure_pin(pin, direction); // Configura o pino especificado como saída
-    ESP_LOGI(TAG1, "Swing ajustado para o pino %i", pin);
-    
+    ESP_LOGI(TAGswing, "Swing ajustado para o pino %i", pin);
+
     ledc_timer_config_t ledc_timer = {
-        .speed_mode       = LEDC_HIGH_SPEED_MODE,
-        .timer_num        = LEDC_TIMER_0,
-        .duty_resolution  = LEDC_TIMER_13_BIT,
-        .freq_hz          = 5000,  // Frequência de 5 kHz
-        .clk_cfg          = LEDC_AUTO_CLK
+        .speed_mode      = LEDC_LOW_SPEED_MODE,
+        .timer_num       = LEDC_TIMER_0,
+        .duty_resolution = LEDC_TIMER_14_BIT,
+        .freq_hz         = 50, 
+        .clk_cfg         = LEDC_AUTO_CLK
     };
+
+    ledc_timer_config(&ledc_timer);
+
+    ledc_channel_config_t ledc_channel = {
+        .gpio_num   = pin,
+        .speed_mode = LEDC_LOW_SPEED_MODE,
+        .channel    = LEDC_CHANNEL_0,
+        .timer_sel  = LEDC_TIMER_0,
+        .duty       = duty,
+        .hpoint     = 0
+    };
+
+    ledc_channel_config(&ledc_channel);
+    ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 4096));
+    // Update duty to apply the new value
+    ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0));
+
+}
+
+void AjustarSwing() {
+    int duty = 869; // 3276 maximo
+    int step = 7;
+    int total_cycles = 117;
+    bool pos_direction = true;
+    //ledc_stop(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 0);
+    //ledc_get_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
+    int i;
+    for (i=0; i<total_cycles; i++) {
+        if (pos_direction) {
+            duty += step;
+            if (duty >= 1638) {
+                duty = 1638;
+                pos_direction = false;
+            }
+        } else {
+            duty -= step;
+            if (duty <= 869) {
+                duty = 869;
+                pos_direction = true;
+            }
+        }
+        ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, duty));
+        ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0));
+        vTaskDelay(pdMS_TO_TICKS(10)); // Aguarda o tempo definido para a próxima iteração
+    }
 }

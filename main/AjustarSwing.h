@@ -1,3 +1,4 @@
 #pragma once
 
-void AjustarSwing(gpio_num_t pin, gpio_mode_t direction);
+void AjustarPinSwing(int pin, int direction, int duty);
+void AjustarSwing();
