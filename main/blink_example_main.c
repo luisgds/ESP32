@@ -2,6 +2,7 @@
 #include "AjustarSwing.h"
 #include "AjustarSleep.h"
 #include "configure_wifi.h"
+#include "AjustarUmidade.h" 
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -20,10 +21,12 @@ void app_main(void) {
     // Inicia task de escuta UDP em paralelo
     xTaskCreate(udp_listener_task, "udp_listener", 4096, NULL, 5, NULL);
 
+    // Inicia task de ajuste de umidade
+    xTaskCreate((TaskFunction_t)AjustarUmidade, "umidade_task", 4096, NULL, 4, NULL);
+    
     // Pinos
     configure_pin(2, GPIO_MODE_OUTPUT);
     AjustarPinSwing(3, GPIO_MODE_OUTPUT, 869);
-
     while (1) {
         if (deve_dormir) {
             deve_dormir = false;
