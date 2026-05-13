@@ -9,6 +9,7 @@
 #include "lwip/sockets.h"
 #include <string.h>
 #include <stdbool.h>
+//#include "ir_controle.h"
 
 static const char *TAG_WIFI = "WIFI";
 
@@ -19,7 +20,9 @@ static const char *TAG_WIFI = "WIFI";
 
 static EventGroupHandle_t wifi_event_group;
 
-bool deve_dormir = false; // ← acessível pela main
+uint8_t deve_dormir = 0; // acessível pela main
+bool swing = false; // acessível pela main
+bool buzzer_ativo = false; // acessível pela main
 
 static void wifi_event_handler(void *arg, esp_event_base_t event_base,
                                 int32_t event_id, void *event_data) {
@@ -81,8 +84,28 @@ void udp_listener_task(void *pvParameters) {
         if (len > 0) {
             rx_buffer[len] = '\0';
             ESP_LOGI(TAG_WIFI, "Pacote recebido: %s", rx_buffer);
-            if (strcmp(rx_buffer, "SLEEP") == 0) {
-                deve_dormir = true;
+            if (strcmp(rx_buffer, "SLEEP0") == 0) {
+                deve_dormir = 0;
+            }
+            else if (strcmp(rx_buffer, "SLEEP1") == 0) {
+                deve_dormir = 1;
+            }
+            else if (strcmp(rx_buffer, "SLEEP2") == 0) {
+                deve_dormir = 2;
+            }
+            else if (strcmp(rx_buffer, "SLEEP3") == 0) {
+                deve_dormir = 3;
+            }
+            else if (strcmp(rx_buffer, "SWING") == 0) {
+                swing = !swing;
+                ESP_LOGI(TAG_WIFI, "Swing %s!", swing ? "ligado" : "desligado");
+            }
+            else if (strcmp(rx_buffer, "BUZZER") == 0) {
+                buzzer_ativo = !buzzer_ativo;
+                ESP_LOGI(TAG_WIFI, "Buzzer %s!", buzzer_ativo ? "ligado" : "desligado");
+            }
+            else {
+                ESP_LOGW(TAG_WIFI, "Comando desconhecido: %s", rx_buffer);
             }
         }
     }

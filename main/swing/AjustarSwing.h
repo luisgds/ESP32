@@ -1,4 +1,4 @@
 #pragma once
 
-void AjustarPinSwing(int pin, int direction, int duty);
+void AjustarPinSwing(int pin, int direction);
 void AjustarSwing();

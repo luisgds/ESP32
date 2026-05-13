@@ -9,9 +9,12 @@
 #include "esp_err.h"
 #include <stdbool.h>
 
+#define SERVO_ABERTO  1638  // posição aberto
+#define SERVO_FECHADO 869   // posição fechado
+
 static const char *TAGswing = "AjustarSwing";
 
-void AjustarPinSwing(int pin, int direction, int duty){
+void AjustarPinSwing(int pin, int direction){
     configure_pin(pin, direction); // Configura o pino especificado como saída
     ESP_LOGI(TAGswing, "Swing ajustado para o pino %i", pin);
 
@@ -30,36 +33,40 @@ void AjustarPinSwing(int pin, int direction, int duty){
         .speed_mode = LEDC_LOW_SPEED_MODE,
         .channel    = LEDC_CHANNEL_0,
         .timer_sel  = LEDC_TIMER_0,
-        .duty       = duty,
+        .duty       = SERVO_FECHADO,
         .hpoint     = 0
     };
 
     ledc_channel_config(&ledc_channel);
-    ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 4096));
-    // Update duty to apply the new value
-    ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0));
 
+    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, SERVO_FECHADO);
+    ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
+    vTaskDelay(pdMS_TO_TICKS(500)); // espera chegar na posição
+    ledc_stop(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 0);
 }
 
 void AjustarSwing() {
-    int duty = 869; // 3276 maximo
+    int duty = SERVO_FECHADO; // 1638 maximo
     int step = 7;
-    int total_cycles = 117;
+    int total_cycles = 234;
     bool pos_direction = true;
-    //ledc_stop(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 0);
-    //ledc_get_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
     int i;
+
+    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, SERVO_FECHADO);
+    ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
+    vTaskDelay(pdMS_TO_TICKS(200));
+
     for (i=0; i<total_cycles; i++) {
         if (pos_direction) {
             duty += step;
-            if (duty >= 1638) {
-                duty = 1638;
+            if (duty >= SERVO_ABERTO) {
+                duty = SERVO_ABERTO;
                 pos_direction = false;
             }
         } else {
             duty -= step;
-            if (duty <= 869) {
-                duty = 869;
+            if (duty <= SERVO_FECHADO) {
+                duty = SERVO_FECHADO;
                 pos_direction = true;
             }
         }
@@ -67,4 +74,6 @@ void AjustarSwing() {
         ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0));
         vTaskDelay(pdMS_TO_TICKS(10)); // Aguarda o tempo definido para a próxima iteração
     }
+    vTaskDelay(pdMS_TO_TICKS(500)); // espera chegar na posição final
+    ledc_stop(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 0);
 }

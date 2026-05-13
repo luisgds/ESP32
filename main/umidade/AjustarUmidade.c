@@ -12,13 +12,12 @@
 static const char *TAG_UMIDADE = "UMIDADE";
 
 // ── Pinos ──
-#define PINO_LED   4
 #define PINO_SERVO 5
 
 #define UMIDADE_MIN 40
 #define UMIDADE_MAX 60
 
-// ── Duty do servo (igual ao AjustarSwing) ──
+// Duty do servo (igual ao AjustarSwing)
 #define SERVO_ABERTO  1638  // posição aberto
 #define SERVO_FECHADO 869   // posição fechado
 
@@ -29,6 +28,10 @@ static bool umidificador_ligado = false;
 // Simulado:
 static int ler_umidade_simulada(void) {
     return 20 + (rand() % 60);
+}
+
+static int ler_temperatura_simulada(void) {
+    return 10 + (rand() % 50);
 }
 /*
 // Real (com biblioteca DHT):
@@ -42,9 +45,6 @@ static int ler_umidade_real(void) {
 static void ligar_umidificador(void) {
     ESP_LOGI(TAG_UMIDADE, "Umidade baixa! Ligando umidificador...");
 
-    // Acende LED
-    gpio_set_level(PINO_LED, 1);
-
     // Servo abre
     ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1, SERVO_ABERTO);
     ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1);
@@ -55,9 +55,6 @@ static void ligar_umidificador(void) {
 static void desligar_umidificador(void) {
     ESP_LOGI(TAG_UMIDADE, "Umidade ok! Desligando umidificador...");
 
-    // Apaga LED
-    gpio_set_level(PINO_LED, 0);
-
     // Servo fecha
     ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1, SERVO_FECHADO);
     ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1);
@@ -65,10 +62,8 @@ static void desligar_umidificador(void) {
     umidificador_ligado = false;
 }
 
-void AjustarUmidade(void) {
-
-    // Configura LED
-    configure_pin(PINO_LED, GPIO_MODE_OUTPUT);
+void AjustarPinUmidade(int pin, int direction) {
+    configure_pin(pin, direction); // Configura o pino especificado como saída
 
     // Configura servo no canal 1 (canal 0 já é usado pelo AjustarSwing)
     ledc_channel_config_t ledc_channel = {
@@ -81,12 +76,15 @@ void AjustarUmidade(void) {
     };
     ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
 
+    ESP_LOGI(TAG_UMIDADE, "Pino de umidade configurado: %i", pin);
+}
+
+void AjustarUmidade(void) {
     ESP_LOGI(TAG_UMIDADE, "Monitorando umidade...");
 
     while (1) {
         int umidade = ler_umidade_simulada();
         ESP_LOGI(TAG_UMIDADE, "Umidade atual: %d%%", umidade);
-
         if (umidade < UMIDADE_MIN && !umidificador_ligado) {
             ligar_umidificador();
         } else if (umidade > UMIDADE_MAX && umidificador_ligado) {

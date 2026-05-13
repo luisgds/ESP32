@@ -2,7 +2,9 @@
 #include "AjustarSwing.h"
 #include "AjustarSleep.h"
 #include "configure_wifi.h"
-#include "AjustarUmidade.h" 
+#include "AjustarUmidade.h"
+//#include "ir_controle.h"
+#include "buzzer.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -23,62 +25,54 @@ void app_main(void) {
 
     // Inicia task de ajuste de umidade
     xTaskCreate((TaskFunction_t)AjustarUmidade, "umidade_task", 4096, NULL, 4, NULL);
-    
+
     // Pinos
     configure_pin(2, GPIO_MODE_OUTPUT);
-    AjustarPinSwing(3, GPIO_MODE_OUTPUT, 869);
+    gpio_set_level(2, 1); // Liga LED verde para indicar que o sistema iniciou
+
+    AjustarPinSwing(3, GPIO_MODE_OUTPUT);
+    AjustarPinUmidade(5, GPIO_MODE_OUTPUT);
+    AjustarPinBuzzer(6, GPIO_MODE_OUTPUT);
     while (1) {
-        if (deve_dormir) {
-            deve_dormir = false;
-            ESP_LOGI(TAG, "Sinal recebido! Dormindo por 10 segundos...");
-            vTaskDelay(pdMS_TO_TICKS(10000));
-            ESP_LOGI(TAG, "Acordou! Voltando ao funcionamento.");
+        if (deve_dormir != 0 && !sleep_ativo()) { // ← só configura se não tiver ativo
+            switch (deve_dormir) {
+                case 1: sleep_iniciar(SLEEP_4H);  break;
+                case 2: sleep_iniciar(SLEEP_8H);  break;
+                case 3: sleep_iniciar(SLEEP_12H); break;
+            }
+            ESP_LOGI(TAG, "Timer configurado!");
+            //rgb_azul();
+            if (buzzer_ativo) tocar_buzzer();
         }
 
-        AjustarSwing();
+        // ── cancela sleep ──
+        if (deve_dormir == 0 && sleep_ativo()) {
+            sleep_cancelar();
+            ESP_LOGI(TAG, "Timer cancelado!");
+            //rgb_verde();
+        }
 
-        ESP_LOGI(TAG, "LED %s!", s_led_state ? "ON" : "OFF");
-        s_led_state = !s_led_state;
-        gpio_set_level(2, s_led_state);
+        // ── timer acabou ──
+        if (sleep_acabou) {
+            sleep_acabou = false;
+            ESP_LOGI(TAG, "Timer acabou! Desligando AR...");
+            //rgb_vermelho();
+            if (buzzer_ativo) tocar_buzzer();
+            gpio_set_level(2, 0); // Desliga LED verde para indicar que o timer acabou
+        }
+
+        // ── log tempo restante ──
+        if (sleep_ativo()) {
+            ESP_LOGI(TAG, "Sleep: %d minutos restantes",
+                    sleep_tempo_restante_min());
+        }
+
+        //if (ligado) gpio_set_level(10, 1); // Liga LED para indicar que o sistema iniciou
+        if (swing) {
+            AjustarSwing();
+            if (buzzer_ativo) tocar_buzzer();
+        }
+        
+       vTaskDelay(pdMS_TO_TICKS(1000)); // verifica 1x por segundo
     }
 }
-
-/*
-
-#include "configure_pin.h"
-#include "AjustarSwing.h"
-#include "AjustarSleep.h"
-
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "esp_log.h"
-#include "driver/gpio.h"
-
-static const char *TAG = "LED Ligar/Desligar";
-
-static uint8_t s_led_state = 0;
-
-void app_main(void)
-{
-    configure_pin(2, GPIO_MODE_OUTPUT);     // Botão de ligar o ar condicionado
-    ESP_LOGI(TAG, "Turning the LED %s!", s_led_state == true ? "ON" : "OFF");
-    AjustarPinSwing(3, GPIO_MODE_OUTPUT, 869);
-    //ESP_LOGI(TAG, "Turning the LED %s!", s_led_state == true ? "ON" : "OFF");
-
-    while (1) {
-        AjustarSwing();
-        //xTaskCreate(&AjustarSwing, "AjustarSwing", 2048, NULL, 5, NULL);
-
-
-
-        ESP_LOGI(TAG, "Turning the LED %s!", s_led_state == true ? "ON" : "OFF");
-
-        s_led_state = !s_led_state;
-        gpio_set_level(2, s_led_state);
-
-        gpio_set_level(2, s_led_state);
-    }
-}
-
-
-*/
