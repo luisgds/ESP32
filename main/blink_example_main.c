@@ -5,6 +5,7 @@
 #include "AjustarUmidade.h"
 //#include "ir_controle.h"
 #include "buzzer.h"
+#include "rgb_led.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -29,7 +30,7 @@ void app_main(void) {
     // Pinos
     configure_pin(2, GPIO_MODE_OUTPUT);
     gpio_set_level(2, 1); // Liga LED verde para indicar que o sistema iniciou
-
+    rgb_led_init();
     AjustarPinSwing(3, GPIO_MODE_OUTPUT);
     AjustarPinUmidade(5, GPIO_MODE_OUTPUT);
     AjustarPinBuzzer(6, GPIO_MODE_OUTPUT);
@@ -41,13 +42,14 @@ void app_main(void) {
                 case 3: sleep_iniciar(SLEEP_12H); break;
             }
             ESP_LOGI(TAG, "Timer configurado!");
-            //rgb_azul();
+            rgb_azul();
             if (buzzer_ativo) tocar_buzzer();
         }
 
         // ── cancela sleep ──
         if (deve_dormir == 0 && sleep_ativo()) {
             sleep_cancelar();
+            rgb_vermelho();
             ESP_LOGI(TAG, "Timer cancelado!");
             //rgb_verde();
         }
@@ -56,7 +58,7 @@ void app_main(void) {
         if (sleep_acabou) {
             sleep_acabou = false;
             ESP_LOGI(TAG, "Timer acabou! Desligando AR...");
-            //rgb_vermelho();
+            rgb_vermelho();
             if (buzzer_ativo) tocar_buzzer();
             gpio_set_level(2, 0); // Desliga LED verde para indicar que o timer acabou
         }
@@ -71,6 +73,7 @@ void app_main(void) {
         if (swing) {
             AjustarSwing();
             if (buzzer_ativo) tocar_buzzer();
+            rgb_verde();
         }
         
        vTaskDelay(pdMS_TO_TICKS(1000)); // verifica 1x por segundo
