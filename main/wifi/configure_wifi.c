@@ -24,7 +24,7 @@ uint8_t deve_dormir = 0; // acessível pela main
 bool swing = false; // acessível pela main
 bool buzzer_ativo = false; // acessível pela main
 
-static void wifi_event_handler(void *arg, esp_event_base_t event_base,
+void wifi_event_handler(void *arg, esp_event_base_t event_base,
                                 int32_t event_id, void *event_data) {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
@@ -104,6 +104,11 @@ void udp_listener_task(void *pvParameters) {
                 buzzer_ativo = !buzzer_ativo;
                 ESP_LOGI(TAG_WIFI, "Buzzer %s!", buzzer_ativo ? "ligado" : "desligado");
             }
+            /*
+            else if (strcmp(rx_buffer, "RESET_WIFI") == 0) {
+                provisioning_resetar(); // apaga credenciais e reinicia
+            }
+            */
             else {
                 ESP_LOGW(TAG_WIFI, "Comando desconhecido: %s", rx_buffer);
             }
