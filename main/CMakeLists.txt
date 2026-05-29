@@ -8,6 +8,10 @@ idf_component_register(SRCS "sleep/AjustarSleep.c"
                         #"ir/ir_controle.c"
                         "componentes/buzzer.c"
                         "componentes/rgb_led.c"
+                        "wifi/ble_provisioning.c"
+                        #wifi/configure_wifi_mqtt.c
+                        #wifi/configure_wifi_tcp.c
+                        #wifi/wifi_provisioning.c
                        INCLUDE_DIRS "."
                                     "sleep"
                                     "wifi"
@@ -18,10 +22,15 @@ idf_component_register(SRCS "sleep/AjustarSleep.c"
                                     "configure_pin"
                                     "AjustarCheiro"
                        REQUIRES esp_driver_ledc 
-                                esp_driver_gpio esp_timer 
-                                esp_wifi esp_event 
+                                esp_driver_gpio 
+                                esp_timer 
+                                esp_wifi 
+                                esp_event 
                                 esp_netif 
                                 lwip 
                                 nvs_flash
+                                bt
                                 #esp_driver_rmt
+                                #mqtt
+                                #esp_http_client
                         PRIV_REQUIRES spi_flash)
