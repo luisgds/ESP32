@@ -2,8 +2,11 @@
 #include "AjustarSwing.h"
 #include "AjustarSleep.h"
 #include "configure_wifi.h"
+//#include "configure_wifi_tcp.h"
+//#include "configure_wifi_mqtt.h"
 #include "AjustarUmidade.h"
 #include "ble_provisioning.h"
+#include "wifi_http.h"
 //#include "ir_controle.h"
 #include "buzzer.h"
 #include "rgb_led.h"
@@ -33,6 +36,7 @@ void app_main(void) {
 
     if (ble_prov_credenciais_salvas()) {
         ble_prov_conectar_wifi(); // usa NVS
+        http_server_iniciar();
         rgb_verde();
     } else {
         // primeira vez — sem credenciais
@@ -41,10 +45,8 @@ void app_main(void) {
         rgb_amarelo();
     }
 
-    //wifi_init();
-
-    // Inicia task de escuta UDP em paralelo
-    xTaskCreate(udp_listener_task, "udp_listener", 4096, NULL, 5, NULL);
+    // Inicia task de escuta TCP em paralelo
+    //xTaskCreate(udp_listener_task, "udp_listener", 4096, NULL, 5, NULL);
 
     // Inicia task de ajuste de umidade
     xTaskCreate((TaskFunction_t)AjustarUmidade, "umidade_task", 4096, NULL, 4, NULL);

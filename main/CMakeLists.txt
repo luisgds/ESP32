@@ -9,9 +9,9 @@ idf_component_register(SRCS "sleep/AjustarSleep.c"
                         "componentes/buzzer.c"
                         "componentes/rgb_led.c"
                         "wifi/ble_provisioning.c"
-                        #wifi/configure_wifi_mqtt.c
-                        #wifi/configure_wifi_tcp.c
-                        #wifi/wifi_provisioning.c
+                        #"wifi/configure_wifi_mqtt.c"
+                        #"wifi/configure_wifi_tcp.c"
+                        "wifi/wifi_http.c"
                        INCLUDE_DIRS "."
                                     "sleep"
                                     "wifi"
@@ -27,10 +27,11 @@ idf_component_register(SRCS "sleep/AjustarSleep.c"
                                 esp_wifi 
                                 esp_event 
                                 esp_netif 
-                                lwip 
+                                lwip
                                 nvs_flash
                                 bt
-                                #esp_driver_rmt
                                 #mqtt
-                                #esp_http_client
+                                mdns
+                                esp_http_server
+                                json
                         PRIV_REQUIRES spi_flash)
