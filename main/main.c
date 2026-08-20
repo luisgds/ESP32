@@ -1,9 +1,8 @@
 #include "configure_pin.h"
 #include "AjustarSwing.h"
 #include "AjustarSleep.h"
-#include "configure_wifi.h"
-//#include "configure_wifi_tcp.h"
-//#include "configure_wifi_mqtt.h"
+//#include "configure_wifi.h"
+#include "configure_wifi_mqtt.h"
 #include "AjustarUmidade.h"
 #include "ble_provisioning.h"
 #include "wifi_http.h"
@@ -37,6 +36,7 @@ void app_main(void) {
     if (ble_prov_credenciais_salvas()) {
         ble_prov_conectar_wifi(); // usa NVS
         http_server_iniciar();
+        mqtt_init();
         rgb_verde();
     } else {
         // primeira vez — sem credenciais
