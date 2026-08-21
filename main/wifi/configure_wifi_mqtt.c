@@ -8,7 +8,7 @@
 
 static const char *TAG_MQTT = "MQTT";
 
-#define MQTT_BROKER "mqtt://broker.hivemq.com:1883"
+#define MQTT_BROKER "mqtt://3.23.128.189:1883"
 #define TOPIC_COMANDOS  "esp32/ac/comandos"
 #define TOPIC_STATUS    "esp32/ac/status"
 
